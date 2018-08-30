@@ -109,6 +109,26 @@ def test_sparse_categorical_crossentropy_4d():
     assert np.isclose(expected_loss, np.mean(loss))
 
 
+def test_multi_hot_sparse_categorical_crossentropy:
+    y_true_np = np.array([[0, 1, 1], [1, 0, 1], [1, 0, 0]])
+    y_pred_np = np.array([[0.1, 0.4, 0.5],
+                          [0.4, 0.2, 0.4],
+                          [0.7, 0.2, 0.1]])
+    y_true_np2 = np.array([[1, 2], [0, 2], [0]])
+    loss = K.eval(losses.categorical_crossentropy(K.variable(y_true_np), K.variable(y_pred_np)))
+
+    # multi hot labels
+    # increment labels
+    for i in y_true_np2:
+        for j in range(0, len(i)):
+            i[j] += 1
+    # pad labels to have the same size
+    y_true_np2 = keras.preprocessing.sequence.pad_sequences(y_true_np2, value=0)
+    y_pred2 = K.variable(y_pred_np)
+    y_true2 = K.variable(y_true_np2)
+    loss2 = K.eval(losses.multi_hot_sparse_categorical_crossentropy(y_true2, y_pred2))
+    assert np.allclose(loss, loss2)
+
 class MSE_MAE_loss:
     """Loss function with internal state, for testing serialization code."""
     def __init__(self, mse_fraction):

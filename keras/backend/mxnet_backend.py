@@ -2987,6 +2987,47 @@ def sparse_categorical_crossentropy(target, output, from_logits=False, axis=-1):
     # reshape to input's shape
     return reshape(KerasSymbol(mx_output), target.shape)
 
+@keras_mxnet_symbol
+def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False, axis=-1):
+    """Categorical crossentropy with integer targets.
+
+    # Arguments
+        target: An integer tensor.
+        output: A tensor resulting from a softmax
+            (unless `from_logits` is True, in which
+            case `output` is expected to be the logits).
+        from_logits: Boolean, whether `output` is the
+            result of a softmax, or is a tensor of logits.
+
+    # Returns
+        Output tensor.
+    """
+    output_dimensions = list(range(ndim(output)))
+    if axis != -1 and axis not in output_dimensions:
+        raise ValueError(
+            '{}{}{}'.format(
+                'Unexpected channels axis {}. '.format(axis),
+                'Expected to be -1 or one of the axes of `output`, ',
+                'which has {} dimensions.'.format(len(int_shape(output)))))
+
+    mx_output = output.symbol
+    # scale predictions so that the class probabilities of each sample sum to 1
+    if from_logits:
+        mx_output = mx.sym.softmax(mx_output, axis=axis)
+    else:
+        mx_output = mx.sym.broadcast_div(mx_output, mx.sym.sum(mx_output,
+                                                               axis=axis,
+                                                               keepdims=True))
+    mx_output = mx.sym.clip(mx_output, a_min=epsilon(), a_max=1.0 - epsilon())
+    mx_output = mx.sym.concat(mx.sym.full((target.shape[0],1), 0.5), mx_output)
+    from mxnet.symbol.contrib import foreach
+    step = lambda data, _ : (mx.sym.take(data[0], data[1]), [])
+    data = [mx_output, target.symbol]
+    outputs, _ = foreach(step, data, [])
+    # clip to prevent NaN's and Inf's
+    outputs = - mx.sym.sum(mx.sym.broadcast_greater(target.symbol, mx.sym.zeros((1,1))) * mx.sym.log(outputs), axis=axis)
+
+    return  KerasSymbol(outputs)
 
 @keras_mxnet_symbol
 def binary_crossentropy(target, output, from_logits=False):
