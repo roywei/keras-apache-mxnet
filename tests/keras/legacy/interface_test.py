@@ -769,9 +769,6 @@ def test_cropping3d_legacy_interface():
     assert json.dumps(old_layer.get_config()) == json.dumps(new_layer.get_config())
 
 
-@pytest.mark.skipif(K.backend() == 'mxnet',
-                    reason='MXNet backend does not support '
-                           'sparse_categorical_crossentropy yet.')
 @keras_test
 def test_generator_methods_interface():
     def train_generator():
