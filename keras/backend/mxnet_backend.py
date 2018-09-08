@@ -2681,10 +2681,8 @@ def rnn(step_function, inputs, initial_states,
     if not dshape[1]:
         raise ValueError('MXNet Backend: Unrolling requires a fixed number of time-steps.')
 
-    if not unroll and dshape[1] is None:
+    if dshape[1] is None:
         raise NotImplementedError(
-            'MXNet Backend: unroll=False '
-            'is not supported yet in RNN.\n'
             'MXNet Backend: Does not support Variable '
             'Length input(Samples of different length). '
             'Please pad your input to a constant length, '
@@ -2694,23 +2692,8 @@ def rnn(step_function, inputs, initial_states,
             'More Details - '
             'https://github.com/awslabs/keras-apache-mxnet/tree/master/docs/mxnet_backend/using_rnn_with_mxnet_backend.md')  # nopep8
 
-    if not unroll and dshape[1] is not None:
-        warnings.warn('MXNet Backend: `unroll=False` is not supported yet in RNN. Since the input_shape is known, '
-                      'setting `unroll=True` and continuing the execution.'
-                      'More Details - '
-                      'https://github.com/awslabs/keras-apache-mxnet/tree/master/docs/mxnet_backend/using_rnn_with_mxnet_backend.md',
-                      # nopep8
-                      stacklevel=2)  # nopep8
-
-    # Split the inputs across time dimension and generate the list of inputs
-    # with shape `(samples, ...)` (no time dimension)
-    inputs = list(mx.sym.split(inputs.symbol, axis=1,
-                               squeeze_axis=1, num_outputs=dshape[1]))
-
-    # Reverse the input sequence
-    if go_backwards:
-        inputs.reverse()
-
+    if constants is None:
+        constants = []
     # Assume learning phase is a placeholder tensor.(F = test, T = train)
     # Some Keras layers (e.g. Dropout, BatchNormalization) behave differently at
     #  training time and testing time. You can tell whether a layer uses the
@@ -2719,56 +2702,87 @@ def rnn(step_function, inputs, initial_states,
     # test mode, False otherwise.
     global uses_learning_phase
     uses_learning_phase = False
+    if unroll:
 
-    states = initial_states
-    outputs = []
-    prev_output = None
+        # Split the inputs across time dimension and generate the list of inputs
+        # with shape `(samples, ...)` (no time dimension)
+        inputs = list(mx.sym.split(inputs.symbol, axis=1,
+                                   squeeze_axis=1, num_outputs=dshape[1]))
 
-    if mask is not None:
-        if not states:
-            raise ValueError('MXNet Backend: Initial states is not provided when masking is '
-                             'enabled.')
-        if mask.dtype != dtype:
-            mask = cast(mask, dtype)
-        # Split the mask across time dimension and generate the list of masks
-        # with shape `(samples, 1)` (no time dimension)
-        masks = list(mx.sym.split(mask.symbol, axis=1,
-                                  squeeze_axis=1, num_outputs=dshape[1]))
-        # Reverse the mask sequence
+        # Reverse the input sequence
         if go_backwards:
-            masks.reverse()
+            inputs.reverse()
+
+        states = initial_states
+        outputs = []
+        prev_output = None
+
+        if mask is not None:
+            if not states:
+                raise ValueError('MXNet Backend: Initial states is not provided when masking is '
+                                 'enabled.')
+            if mask.dtype != dtype:
+                mask = cast(mask, dtype)
+            # Split the mask across time dimension and generate the list of masks
+            # with shape `(samples, 1)` (no time dimension)
+            masks = list(mx.sym.split(mask.symbol, axis=1,
+                                      squeeze_axis=1, num_outputs=dshape[1]))
+            # Reverse the mask sequence
+            if go_backwards:
+                masks.reverse()
+        else:
+            masks = [None for _ in inputs]
+
+        # Iterate over a time step
+        for inp, msk in zip(inputs, masks):
+            last_output, new_states = step_function(KerasSymbol(inp),
+                                                    states + constants)
+            if getattr(last_output, '_uses_learning_phase', False):
+                uses_learning_phase = True
+            if msk is not None:
+                new_states = [KerasSymbol(mx.sym.where(msk,
+                                                       ns.symbol,
+                                                       s.symbol))
+                              for s, ns in zip(states, new_states)]
+                # Initialize the output for first time step
+                if prev_output is None:
+                    prev_output = zeros_like(last_output)
+                last_output = KerasSymbol(mx.sym.where(msk,
+                                                       last_output.symbol,
+                                                       prev_output.symbol))
+                prev_output = last_output
+            states = new_states
+            # Expand the output dimension from `(samples, output_dim)` to
+            # `(samples, 1, output_dim)` with middle axis as time dimension
+            outputs.append(mx.sym.expand_dims(last_output.symbol, axis=1))
+        # Concatenate the output across time dimension
+        outputs = mx.sym.Concat(*outputs, dim=1)
+        last_output._uses_learning_phase = uses_learning_phase
+        return last_output, KerasSymbol(outputs), states
     else:
-        masks = [None for _ in inputs]
+        if mask is not None:
+            raise NotImplementedError("MXNet Backend: Does not support masking yet")
+        else:
+            # Reverse the input sequence
+            if go_backwards:
+                inputs.reverse()
 
-    if constants is None:
-        constants = []
+            def _step(inputs, states):
+                outputs, new_states = step_function(KerasSymbol(inputs),
+                                                    [KerasSymbol(state) for state in states] + constants)
+                if getattr(outputs, '_uses_learning_phase', False):
+                    global uses_learning_phase
+                    uses_learning_phase = True
+                return outputs.symbol, [new_state.symbol for new_state in new_states]
 
-    # Iterate over a time step
-    for inp, msk in zip(inputs, masks):
-        last_output, new_states = step_function(KerasSymbol(inp),
-                                                states + constants)
-        if getattr(last_output, '_uses_learning_phase', False):
-            uses_learning_phase = True
-        if msk is not None:
-            new_states = [KerasSymbol(mx.sym.where(msk,
-                                                   ns.symbol,
-                                                   s.symbol))
-                          for s, ns in zip(states, new_states)]
-            # Initialize the output for first time step
-            if prev_output is None:
-                prev_output = zeros_like(last_output)
-            last_output = KerasSymbol(mx.sym.where(msk,
-                                                   last_output.symbol,
-                                                   prev_output.symbol))
-            prev_output = last_output
-        states = new_states
-        # Expand the output dimension from `(samples, output_dim)` to
-        # `(samples, 1, output_dim)` with middle axis as time dimension
-        outputs.append(mx.sym.expand_dims(last_output.symbol, axis=1))
-    # Concatenate the output across time dimension
-    outputs = mx.sym.Concat(*outputs, dim=1)
-    last_output._uses_learning_phase = uses_learning_phase
-    return last_output, KerasSymbol(outputs), states
+            results, states = mx.symbol.contrib.foreach(
+                body=_step,
+                data=inputs.symbol,
+                init_states=[state.symbol for state in initial_states])
+
+            last_output = KerasSymbol(mx.sym.take(results, mx.sym.full((1,1), -1)))
+            last_output._uses_learning_phase = uses_learning_phase
+            return last_output, KerasSymbol(results), [KerasSymbol(state) for state in states]
 
 
 @keras_mxnet_symbol

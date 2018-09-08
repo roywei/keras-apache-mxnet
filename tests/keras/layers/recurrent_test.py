@@ -560,9 +560,6 @@ def test_minimal_rnn_cell_non_layer_multiple_states():
     model.train_on_batch(np.zeros((6, 5, 5)), np.zeros((6, 32)))
 
 
-@pytest.mark.skipif(K.backend() == 'mxnet',
-                    reason='MXNet backend does not support unroll=False in '
-                           'RNN yet.')
 @keras_test
 def test_minimal_rnn_cell_layer():
 
@@ -598,7 +595,11 @@ def test_minimal_rnn_cell_layer():
             return dict(list(base_config.items()) + list(config.items()))
 
     # Test basic case.
-    x = keras.Input((None, 5))
+    if K.backend() == 'mxnet':
+        # MXNet backend requires input shape
+        x = keras.Input((6, 5))
+    else:
+        x = keras.Input((None, 5))
     cell = MinimalRNNCell(32)
     layer = recurrent.RNN(cell)
     y = layer(x)
@@ -643,13 +644,14 @@ def test_minimal_rnn_cell_layer():
     assert_allclose(y_np, y_np_2, atol=1e-4)
 
 
-@pytest.mark.skipif(K.backend() == 'mxnet',
-                    reason='MXNet backend does not support unroll=False in '
-                           'RNN yet.')
 @rnn_cell_test
 def test_builtin_rnn_cell_layer(cell_class):
     # Test basic case.
-    x = keras.Input((None, 5))
+    if K.backend() == 'mxnet':
+        # MXNet backend requires input shape
+        x = keras.Input((6, 5))
+    else:
+        x = keras.Input((None, 5))
     cell = cell_class(32)
     layer = recurrent.RNN(cell)
     y = layer(x)
