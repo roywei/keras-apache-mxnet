@@ -15,6 +15,7 @@ from .losses import logcosh
 from .losses import squared_hinge
 from .losses import categorical_crossentropy
 from .losses import sparse_categorical_crossentropy
+from .losses import multi_hot_sparse_categorical_crossentropy
 from .losses import binary_crossentropy
 from .losses import kullback_leibler_divergence
 from .losses import poisson
@@ -35,6 +36,12 @@ def categorical_accuracy(y_true, y_pred):
 
 def sparse_categorical_accuracy(y_true, y_pred):
     return K.cast(K.equal(K.max(y_true, axis=-1),
+                          K.cast(K.argmax(y_pred, axis=-1), K.floatx())),
+                  K.floatx())
+
+
+def multi_hot_sparse_categorical_accuracy(y_true, y_pred):
+    return K.cast(K.equal(K.max(y_true, axis=-1) - 1,
                           K.cast(K.argmax(y_pred, axis=-1), K.floatx())),
                   K.floatx())
 

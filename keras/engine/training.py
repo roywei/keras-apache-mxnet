@@ -381,6 +381,13 @@ class Model(Network):
                             metric_fn = metrics_module.sparse_categorical_accuracy
                         elif metric in ('crossentropy', 'ce'):
                             metric_fn = metrics_module.sparse_categorical_crossentropy
+                    elif self.loss_functions[i] == losses.multi_hot_sparse_categorical_crossentropy:
+                        # case: multi hot sparse categorical accuracy/crossentropy
+                        # with sparse list of integer targets
+                        if metric in ('accuracy', 'acc'):
+                            metric_fn = metrics_module.multi_hot_sparse_categorical_accuracy
+                        elif metric in ('crossentropy', 'ce'):
+                            metric_fn = metrics_module.multi_hot_sparse_categorical_crossentropy
                     else:
                         # case: categorical accuracy/crossentropy
                         if metric in ('accuracy', 'acc'):
