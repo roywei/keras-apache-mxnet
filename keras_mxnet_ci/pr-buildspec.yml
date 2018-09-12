@@ -11,7 +11,7 @@ phases:
       echo "Installing MXNet";
       apt-get update;
       pip install --upgrade pip;
-      pip install mxnet-mkl;
+      pip install mxnet-mkl --pre;
       echo "Installing Tensorflow";
       pip install tensorflow;
       echo "Installing Theano";
