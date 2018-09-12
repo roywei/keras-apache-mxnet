@@ -117,3 +117,13 @@ def to_channels_first(data):
     else:
         data = to_channels_first_helper(data)
     return data
+
+
+def pad_multi_hot_labels(labels):
+    # increment labels so it can be padded with 0s and won't affect class label
+    # with 3 classes labels 0, 1 ,2 will become 1, 2, 3
+    for label in labels:
+        for j in range(0, len(label)):
+            label[j] += 1
+    from keras.preprocessing.sequence import  pad_sequences
+    return pad_sequences(labels, value=0)

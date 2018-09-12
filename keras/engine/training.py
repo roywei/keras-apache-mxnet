@@ -779,12 +779,18 @@ class Model(Network):
                         feed_output_shapes.append(output_shape)
 
             # Standardize the outputs.
+            check_shape = True
+            if K.backend() == 'mxnet':
+                for loss_fn in self.loss_functions:
+                    if loss_fn is losses.multi_hot_sparse_categorical_crossentropy:
+                        check_shape = False
             y = standardize_input_data(
                 y,
                 feed_output_names,
                 feed_output_shapes,
                 check_batch_axis=False,  # Don't enforce the batch size.
-                exception_prefix='target')
+                exception_prefix='target',
+                check_shape=check_shape)
 
             # Generate sample-wise weight values given the `sample_weight` and
             # `class_weight` arguments.

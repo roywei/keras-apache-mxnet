@@ -2989,7 +2989,7 @@ def sparse_categorical_crossentropy(target, output, from_logits=False, axis=-1):
 
 @keras_mxnet_symbol
 def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False, axis=-1):
-    """Categorical crossentropy with integer targets.
+    """Calculate Categorical crossentropy with a list of integer targets (multi-labels)
 
     # Arguments
         target: An integer tensor.
@@ -3001,6 +3001,19 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
 
     # Returns
         Output tensor.
+
+    # Example:
+    ```
+    # for a multi-label classification problem with 3 classes
+    # target with multi labels in normal categorical crossentropy
+    >>>target_dense = np.array([[0, 1, 1], [1, 0, 1], [1, 0, 0]])
+    # output from softmax remains the same format
+    >>>output = np.array([[0.1, 0.4, 0.5],
+    >>>                   [0.4, 0.2, 0.4],
+    >>>                   [0.7, 0.2, 0.1]])
+    # target with multi labels in multi_hot categorical crossentropy
+    >>>y_true_np2 = np.array([[1, 2], [0, 2],[0]])
+    ```
     """
     output_dimensions = list(range(ndim(output)))
     if axis != -1 and axis not in output_dimensions:
@@ -3018,13 +3031,17 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
         mx_output = mx.sym.broadcast_div(mx_output, mx.sym.sum(mx_output,
                                                                axis=axis,
                                                                keepdims=True))
-    mx_output = mx.sym.clip(mx_output, a_min=epsilon(), a_max=1.0 - epsilon())
-    mx_output = mx.sym.concat(mx.sym.full((target.shape[0],1), 0.5), mx_output)
-    from mxnet.symbol.contrib import foreach
-    step = lambda data, _ : (mx.sym.take(data[0], data[1]), [])
-    data = [mx_output, target.symbol]
-    outputs, _ = foreach(step, data, [])
     # clip to prevent NaN's and Inf's
+    mx_output = mx.sym.clip(mx_output, a_min=epsilon(), a_max=1.0 - epsilon())
+    # pad one column to the left of output for padded values in input labels (target)
+    mx_output = mx.sym.concat(mx.sym.full((0, 1), 0.5), mx_output)
+
+    # using control flow ops to iterate output and take target (true label)
+    _step = lambda data, _ : (mx.sym.take(data[0], data[1]), [])
+    data = [mx_output, target.symbol]
+    outputs, _ = mx.symbol.contrib.foreach(_step, data, [])
+
+    # calculate loss
     outputs = - mx.sym.sum(mx.sym.broadcast_greater(target.symbol, mx.sym.zeros((1,1))) * mx.sym.log(outputs), axis=axis)
 
     return  KerasSymbol(outputs)
