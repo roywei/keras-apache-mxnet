@@ -3005,6 +3005,7 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
 
     # Example:
     ```
+    # refer to examples/multi_hot_sparse_categorical_crossentropy.py
     # for a multi-label classification problem with 3 classes
     # target with multi labels in normal categorical crossentropy
     >>>target_dense = np.array([[0, 1, 1], [1, 0, 1], [1, 0, 0]])

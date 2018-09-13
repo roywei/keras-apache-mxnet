@@ -13,7 +13,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.preprocessing.sequence import pad_sequences
-
+from keras import backend as K
 """
 Input:
 input data is random images of size (32, 32) in channels first data format
@@ -52,10 +52,10 @@ It will have shape (num_samples, 5) which still save space compare to dense labe
 img_rows, img_cols = 28, 28
 epoch = 5
 num_gpus = 4
-num_classes = 1000
+num_classes = 3000
 num_samples = 50000
 input_shape = (3, img_rows, img_cols)
-
+batch_size = num_gpus * 32 if num_gpus > 1 else 32
 # creating random images of size (28, 28) as training data
 x_train = np.random.randint(0, 256, (num_samples, 3, img_rows, img_cols))
 
@@ -87,16 +87,17 @@ model.add(Dense(128, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(num_classes, activation='softmax'))
 
+# use  multi gpu
+if num_gpus > 1:
+    model = keras.utils.multi_gpu_model(model, num_gpus)
+
 # use normal categorical crossentropy
 model.compile(loss=keras.losses.categorical_crossentropy,
               optimizer=keras.optimizers.Adadelta(),
               metrics=['accuracy'])
-start = time.time()
 model.fit(x_train, dense_labels,
-          batch_size=32,
-          epochs=epoch,
-          verbose=1)
-print("categorical_crossentropy time:", time.time() - start)
+          batch_size=batch_size,
+          epochs=epoch)
 
 
 # use normal multi_hot_sparse_categorical_crossentropy
@@ -106,10 +107,16 @@ model.compile(loss=keras.losses.multi_hot_sparse_categorical_crossentropy,
 
 # pad sparse labels into shape length with value -1 to differentiate from normal labels
 y_train_pad = pad_sequences(sparse_labels, value=-1)
-
-start = time.time()
 model.fit(x_train, y_train_pad,
-          batch_size=32,
-          epochs=epoch,
-          verbose=1)
-print("multi_hot_categorical_crossentropy time:", time.time() - start)
+          batch_size=batch_size,
+          epochs=epoch)
+
+# speed reference on two losses
+outputs = model.predict(x_train)
+start = time.time()
+loss = keras.losses.categorical_crossentropy(K.variable(outputs), K.variable(dense_labels))
+print("categorical crossentropy loss time per epoch:", time.time() - start)
+outputs = model.predict(x_train)
+start = time.time()
+loss = keras.losses.categorical_crossentropy(K.variable(outputs), K.variable(y_train_pad))
+print("multi hot sparse categorical crossentropy loss time per epoch:", time.time() - start)
