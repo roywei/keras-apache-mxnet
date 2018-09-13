@@ -785,19 +785,22 @@ class Model(Network):
                     else:
                         feed_output_shapes.append(output_shape)
 
-            # Standardize the outputs.
-            check_shape = True
+            check_last_layer_shape = True
+            # multi_hot_sparse_categorical_crossentropy only available in mxnet backend
             if K.backend() == 'mxnet':
                 for loss_fn in self.loss_functions:
                     if loss_fn is losses.multi_hot_sparse_categorical_crossentropy:
-                        check_shape = False
+                        # does not check the last layer shape when multi_hot_sparse_categorical_crossentropy \
+                        # is used, since we reduce the dimension of sparse labels.
+                        check_last_layer_shape = False
+            # Standardize the outputs.
             y = standardize_input_data(
                 y,
                 feed_output_names,
                 feed_output_shapes,
                 check_batch_axis=False,  # Don't enforce the batch size.
                 exception_prefix='target',
-                check_shape=check_shape)
+                check_last_layer_shape=check_last_layer_shape)
 
             # Generate sample-wise weight values given the `sample_weight` and
             # `class_weight` arguments.

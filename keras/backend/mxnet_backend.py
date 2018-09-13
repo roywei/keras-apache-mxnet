@@ -2987,6 +2987,7 @@ def sparse_categorical_crossentropy(target, output, from_logits=False, axis=-1):
     # reshape to input's shape
     return reshape(KerasSymbol(mx_output), target.shape)
 
+
 @keras_mxnet_symbol
 def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False, axis=-1):
     """Calculate Categorical crossentropy with a list of integer targets (multi-labels)
@@ -3033,18 +3034,18 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
                                                                keepdims=True))
     # clip to prevent NaN's and Inf's
     mx_output = mx.sym.clip(mx_output, a_min=epsilon(), a_max=1.0 - epsilon())
-    # pad one column to the left of output for padded values in input labels (target)
-    mx_output = mx.sym.concat(mx.sym.full((0, 1), 0.5), mx_output)
 
     # using control flow ops to iterate output and take target (true label)
-    _step = lambda data, _ : (mx.sym.take(data[0], data[1]), [])
+    _step = lambda data, _: (mx.sym.take(data[0], data[1]), [])
     data = [mx_output, target.symbol]
     outputs, _ = mx.symbol.contrib.foreach(_step, data, [])
 
     # calculate loss
-    outputs = - mx.sym.sum(mx.sym.broadcast_greater(target.symbol, mx.sym.zeros((1,1))) * mx.sym.log(outputs), axis=axis)
+    # check if target is larger than 0, remove padded labels (-1)
+    outputs = - mx.sym.sum(mx.sym.broadcast_greater_equal(target.symbol, mx.sym.zeros((1, 1))) *
+                           mx.sym.log(outputs), axis=axis)
+    return KerasSymbol(outputs)
 
-    return  KerasSymbol(outputs)
 
 @keras_mxnet_symbol
 def binary_crossentropy(target, output, from_logits=False):

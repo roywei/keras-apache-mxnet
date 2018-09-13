@@ -33,7 +33,7 @@ def standardize_input_data(data,
                            shapes=None,
                            check_batch_axis=True,
                            exception_prefix='',
-                           check_shape=True):
+                           check_last_layer_shape=True):
     """Normalizes inputs and targets provided by users.
 
     Users may pass data as a list of arrays, dictionary of arrays,
@@ -129,14 +129,18 @@ def standardize_input_data(data,
                 if not check_batch_axis:
                     data_shape = data_shape[1:]
                     shape = shape[1:]
-                if check_shape:
-                    for dim, ref_dim in zip(data_shape, shape):
-                        if ref_dim != dim and ref_dim:
-                            raise ValueError(
-                                'Error when checking ' + exception_prefix +
-                                ': expected ' + names[i] + ' to have shape ' +
-                                str(shape) + ' but got array with shape ' +
-                                str(data_shape))
+                for dim, ref_dim in zip(data_shape, shape):
+                    if ref_dim != dim and ref_dim:
+                        # ignore shape differencew in last layer only if loss is
+                        # multi_hot_sparse_categorical_crossentropy,
+                        # last layer can only be dense or activation layer
+                        if not check_last_layer_shape and names[i].startswith(("dense", "activation")):
+                            continue
+                        raise ValueError(
+                            'Error when checking ' + exception_prefix +
+                            ': expected ' + names[i] + ' to have shape ' +
+                            str(shape) + ' but got array with shape ' +
+                            str(data_shape))
     return data
 
 

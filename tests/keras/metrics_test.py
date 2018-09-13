@@ -39,6 +39,7 @@ all_metrics_mxnet = [
 all_sparse_metrics = [
     metrics.sparse_categorical_accuracy,
     metrics.sparse_categorical_crossentropy,
+    metrics.multi_hot_sparse_categorical_accuracy
 ]
 
 
