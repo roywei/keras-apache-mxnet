@@ -39,14 +39,8 @@ print('x_test shape:', x_test.shape)
 print('Build model...')
 model = Sequential()
 
-# MXNet backend does not support dropout in LSTM and cannot automatically infer shape
-if K.backend() == 'mxnet':
-    # specifying input_length and removed dropout params
-    model.add(Embedding(max_features, 128, input_length=maxlen))
-    model.add(LSTM(128, unroll=True))
-else:
-    model.add(Embedding(max_features, 128))
-    model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
+model.add(Embedding(max_features, 128))
+model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
 model.add(Dense(1, activation='sigmoid'))
 
 # try using different optimizers and different optimizer configs
