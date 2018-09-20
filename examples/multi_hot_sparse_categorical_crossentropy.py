@@ -73,7 +73,6 @@ for i in range(0, num_samples):
     sparse_label_j = np.where(dense_labels[i] == 1)[0]
     sparse_labels.append(sparse_label_j)
 
-
 # construct a simple CNN model
 model = Sequential()
 model.add(Conv2D(32, kernel_size=(3, 3),

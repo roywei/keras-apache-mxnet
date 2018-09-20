@@ -3017,6 +3017,11 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
     >>>y_true_np2 = np.array([[1, 2], [0, 2],[0]])
     ```
     """
+    # TODO: remove version check after mxnet 1.3.1 stable release
+    if mx.__version__ != '1.3.1':
+        raise NotImplementedError('MXNet Backend: multi_hot_sparse_categorical_crossentropy only'
+                                  'works with MXNet 1.3.1 or newer, please upgrade MXNet using:'
+                                  'pip install --upgrade mxnet --pre')
     output_dimensions = list(range(ndim(output)))
     if axis != -1 and axis not in output_dimensions:
         raise ValueError(
