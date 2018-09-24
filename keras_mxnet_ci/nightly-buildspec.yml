@@ -9,7 +9,7 @@ phases:
       echo "Installing MXNet";
       apt-get update;
       pip install --upgrade pip;
-      pip install mxnet-mkl;
+      pip install mxnet-mkl --pre;
       echo "Installing Tensorflow";
       pip install tensorflow;
       echo "Installing Theano";
@@ -24,8 +24,8 @@ phases:
 
   build:
     commands:
+      echo "Running PEP tests";
+      py.test --pep8 -m pep8 -n0;
       echo "Running Keras Unit Tests and Integration Tests for all the backends";
       py.test tests/ --ignore=tests/keras/utils/;
       py.test tests/keras/utils/;
-      echo "Running PEP tests";
-      py.test --pep8 -m pep8 -n0;
