@@ -15,7 +15,7 @@ phases:
       echo "Installing Theano";
       pip install theano;
       pip install pillow;
-      pip install graphviz;
+      pip install --upgrade graphviz;
       pip install pydot;
       echo "Installing Keras from source";
       pip install -e .[visualize,tests];
