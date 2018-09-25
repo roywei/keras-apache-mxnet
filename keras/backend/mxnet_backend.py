@@ -2741,9 +2741,9 @@ def rnn(step_function, inputs, initial_states,
         outputs = mx.sym.concat(*outputs, dim=1)
     else:
         # TODO: remove version check after mxnet 1.3.1 release
-        if mx.__version__ >= '1.3.1':
-            raise NotImplementedError('unroll=False in RNN only works with MXNet 1.3.1 or newer ,'
-                                      ' please upgrade to latest master using: pip install --ugprade mxnet --pre')
+        if mx.__version__ < '1.3.1':
+            raise NotImplementedError('unroll=False in RNN only works with MXNet 1.3.1 or newer, '
+                                      'please upgrade to latest master using: pip install --ugprade mxnet --pre')
 
         # defining step functions for each RNN cells, implementation taken from call functions
         # from each RNN cell class in keras.layers.recurrent
@@ -3376,10 +3376,10 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
     ```
     """
     # TODO: remove version check after mxnet 1.3.1 stable release
-    if mx.__version__ >= '1.3.1':
+    if mx.__version__ < '1.3.1':
         raise NotImplementedError('MXNet Backend: multi_hot_sparse_categorical_crossentropy only'
                                   'works with MXNet 1.3.1 or newer, please upgrade MXNet using:'
-                                  'p    ip install --upgrade mxnet --pre')
+                                  'pip install --upgrade mxnet --pre')
     output_dimensions = list(range(ndim(output)))
     if axis != -1 and axis not in output_dimensions:
         raise ValueError(
@@ -5361,12 +5361,14 @@ def get_model():
                     try:
                         self._args[name][:] = args[name]
                     except:
+                        # when name is not in self._args (key not found)
                         self._args[name] = []
                         self._args[name][:] = args[name]
                 for name in self._aux_names:
                     try:
                         self._auxs[name][:] = auxs[name]
                     except:
+                        # when name is not in self._auxs (key not found)
                         self._auxs[name] = []
                         self._auxs[name][:] = auxs[name]
                 self._weights_dirty = False
