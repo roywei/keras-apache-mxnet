@@ -17,8 +17,10 @@ phases:
       echo "Installing Theano";
       pip install theano;
       pip install pillow;
+      sudo apt-get -y install graphviz;
       pip install --upgrade graphviz;
       pip install pydot;
+      pip install nose;
       echo "Installing Keras from source";
       pip install -e .[visualize,tests];
       pip uninstall --yes keras;
