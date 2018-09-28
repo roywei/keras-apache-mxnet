@@ -3,24 +3,20 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Variable length inputs are not supported](#variable-length-inputs-are-not-supported)
-3. [Unroll=False is not supported](#unrollfalse-is-not-supported)
+2. [Variable length inputs are not supported for unrolling](#variable-length-inputs-are-not-supported-for-unrolling)
+3. [Using Unrolling in RNN](#using-unrolling-in-rnn)
 4. [Slower CPU training performance](#slower-cpu-training-performance)
 
 ## Overview
 
 In this document, we describe the limitations of using RNNs with MXNet backend and available workarounds for the same.
 
-## Variable length inputs are not supported
+## Variable length inputs are not supported for unrolling
 
-MXNet backend does not support variable length inputs in the recurrent layers. To overcome this limitation, you can 
+MXNet backend does not support variable length inputs when you unrolling RNN cells in the recurrent layers. To overcome this limitation, you can
 pad the input sequences to prepare fixed length inputs. The MXNet backend requires both the `input_shape` and 
 `unroll=True` parameters while adding the SimpleRNN/LSTM/GRU layer.
 
-```
-NOTE:
-    MXNet does not support symbolic control flow operators. However, this is a work in progress feature. This feature will be supported in upcoming releases.
-```
 
 ### Transform variable length to fixed length inputs
 
@@ -57,9 +53,13 @@ NOTE:
     arbitrary large maxlen. It is always optimal to choose maxlen for padding to be equal to the max length of the 
     input sequences.
 ```
-## Unroll=False is not supported
+## Using unrolling in RNN
 
-As described above, MXNet backend does not support variable length input and hence `unroll=False` is not supported in RNN layers. You are expected to provide `input_shape` and set `unroll=True`.
+In Keras RNN layers, by default unroll is set to False, and it requires control flow opreators(e.g. foreach, while_loop).
+We recently added support for this feature so by default RNN layers are not unrolled, same as other backends.
+
+Unrolling RNN Cells will have better performance but comsumes more memory. It's only suitable for short sequeence. For more details, refer to
+[Keras RNN API](https://keras.io/layers/recurrent/)
 
 ## Slower CPU training performance
 
