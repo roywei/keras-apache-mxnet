@@ -623,7 +623,7 @@ def test_saving_recurrent_layer_with_init_state():
     input_initial_state = Input(shape=(vector_size,))
     input_x = Input(shape=(input_length, vector_size))
 
-    lstm = LSTM(vector_size, return_sequences=True)(
+    lstm = LSTM(vector_size, unroll=True, return_sequences=True)(
         input_x, initial_state=[input_initial_state, input_initial_state])
 
     model = Model(inputs=[input_x, input_initial_state], outputs=[lstm])
