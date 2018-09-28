@@ -832,7 +832,7 @@ def test_sequential_lstm_mxnet_model_saving():
 
     model = Sequential()
     model.add(Embedding(max_features, 128, input_length=maxlen))
-    model.add(LSTM(128, unroll=True))
+    model.add(LSTM(128))
 
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',

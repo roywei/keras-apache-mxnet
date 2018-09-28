@@ -719,7 +719,7 @@ def zeros_like(x, dtype=None, name=None):
                [ 0.,  0.,  0.]], dtype=float32)
     ```
     """
-    return KerasSymbol(mx.sym.zeros_like(data=x.symbol, name = _prepare_name(name, 'zeroslikeinit')))
+    return KerasSymbol(mx.sym.zeros_like(data=x.symbol, name=_prepare_name(name, 'zeroslikeinit')))
 
 
 def ones_like(x, dtype=None, name=None):
@@ -744,7 +744,7 @@ def ones_like(x, dtype=None, name=None):
                [ 1.,  1.,  1.]], dtype=float32)
     ```
     """
-    return KerasSymbol(mx.sym.ones_like(data=x.symbol, name = _prepare_name(name, 'oneslikeinit')))
+    return KerasSymbol(mx.sym.ones_like(data=x.symbol, name=_prepare_name(name, 'oneslikeinit')))
 
 
 def identity(x):
@@ -2685,6 +2685,14 @@ def rnn(step_function, inputs, initial_states,
     global uses_learning_phase
     uses_learning_phase = False
 
+    # for custom operations when K.rnn is directly called to operate
+    # on tensors (mostly unit tests), no cell information is provided,
+    # use unrolling by default
+    if not unroll and cell is None:
+        unroll = True
+        warnings.warn('MXNet Backend: K.rnn() is called without RNN cell information, '
+                      'using unrolling by default.')
+
     if unroll:
         # Split the inputs across time dimension and generate the list of inputs
         # with shape `(samples, ...)` (no time dimension)
@@ -3051,14 +3059,10 @@ def rnn(step_function, inputs, initial_states,
         last_output = KerasSymbol(states[0])
         states = [KerasSymbol(state) for state in states]
         outputs = mx.sym.transpose(outputs, axes)
-        # Properly set learning phase on output tensor.
-
 
     outputs = KerasSymbol(outputs)
     last_output._uses_learning_phase = uses_learning_phase
     return last_output, outputs, states
-
-
 
 
 def _dot_rnn(x, y):
