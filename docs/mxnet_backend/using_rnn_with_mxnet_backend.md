@@ -55,10 +55,10 @@ NOTE:
 ```
 ## Using unrolling in RNN
 
-In Keras RNN layers, by default unroll is set to False, and it requires control flow opreators(e.g. foreach, while_loop).
+In Keras RNN layers, by default unroll is set to False, and it requires control flow operators(e.g. foreach, while_loop).
 We recently added support for this feature so by default RNN layers are not unrolled, same as other backends.
 
-Unrolling RNN Cells will have better performance but comsumes more memory. It's only suitable for short sequeence. For more details, refer to
+Unrolling RNN Cells will have better performance but consumes more memory. It's only suitable for short sequences. For more details, refer to
 [Keras RNN API](https://keras.io/layers/recurrent/)
 
 ## Slower CPU training performance
