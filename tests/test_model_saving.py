@@ -19,6 +19,7 @@ from keras import losses
 from keras import metrics
 from keras.utils.test_utils import keras_test
 from keras.models import save_model, load_model, save_mxnet_model
+from keras import datasets
 
 
 skipif_no_tf_gpu = pytest.mark.skipif(
@@ -985,6 +986,67 @@ def test_functional_model_get_mxnet_model_info():
     # In this example, we are passing x as input with shape (1,3)
     assert data_shapes[0].shape == (1, 3)
 
+
+def get_kernel_and_bias(model):
+        """
+        Given a model, return it's kernel and bias values for Conv2D and Dense layers
+        :param model: input model
+        :return: list of kernel values and bias values of Conv2D and Dens layers
+        """
+        w_list = []
+        b_list = []
+        for i, l in enumerate(model.layers):
+            if isinstance(l, Conv2D) or isinstance(l, Dense):
+                w, b = l.get_weights()
+                w_list.append(w)
+                b_list.append(b)
+        return w_list, b_list
+
+
+@keras_test
+def test_fine_tune_save_weights():
+    def get_model():
+        # build a regression model
+        model = Sequential()
+        model.add(Dense(20, input_dim=13, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(1, kernel_initializer='normal'))
+        return model
+
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = datasets.boston_housing.load_data()
+
+    model1 = get_model()
+    model1.compile(loss='mean_squared_error', optimizer='adam')
+    model1.fit(x_train, y_train, epochs=1)
+    # record scores for comparison
+    score1 = model1.evaluate(x_test, y_test, verbose=0)
+    # save as pre trained weights
+    model1.save_weights('pre-trained.h5')
+
+    model2 = get_model()
+    model2.load_weights('pre-trained.h5')
+    model2.compile(loss='mean_squared_error', optimizer='adam')
+    score2 = model2.evaluate(x_test, y_test, verbose=0)
+    # make sure weights are loaded and predict the same score as model1
+    assert_allclose(score1, score2)
+
+    # fine tune on model2
+    model2.fit(x_train, y_train, epochs=1)
+
+    # make sure after fine tune, loss is decreased
+    score3 = model2.evaluate(x_test, y_test, verbose=0)
+    assert np.less_equal(score3, score2)
+
+    # compare kernel and bias from model1 and model2
+    # they should have been updated after fine tune
+    kernel1, bias1 = get_kernel_and_bias(model1)
+    kernel2, bias2 = get_kernel_and_bias(model2)
+    total_weight_diff = 0.0
+    for i in range(0, len(kernel1)):
+        total_weight_diff += np.sum(np.abs(kernel1[i] - kernel2[i]))
+        total_weight_diff += np.sum(np.abs(bias1[i] - bias2[i]))
+    assert total_weight_diff > 0.0
+    os.remove('pre-trained.h5')
 
 if __name__ == '__main__':
     pytest.main([__file__])
