@@ -2454,6 +2454,24 @@ def get_value(x):
     """
     return eval(x)
 
+def get_arg_params(x):
+    """
+    given parameter name,
+    get the updated value from bucketing module arg_params
+    :param x: parameter values to  (e.g. kernels, bias)
+    :return: updated parameter values
+    """
+    # retrieve from bind values first, which is up to date with
+    # arg_params in bucketing module
+    if isinstance(x, KerasSymbol):
+        if x.tensor is not None:
+            if x.name in x.get_bind_values() and _MODEL is not None:
+                _MODEL._sync_weights()
+                ret = x.get_bind_values()[x.name].asnumpy()
+    else:
+        ret = eval(x)
+    return ret
+
 
 def batch_get_value(ops):
     """Returns the value of more than one tensor variable.
@@ -2464,7 +2482,7 @@ def batch_get_value(ops):
     # Returns
         A list of Numpy arrays.
     """
-    return [get_value(op) for op in ops]
+    return [get_arg_params(op) for op in ops]
 
 
 def set_value(x, value):
