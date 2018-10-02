@@ -10,13 +10,13 @@ from keras.layers import Dense, Input, Activation
 from keras.optimizers import SGD
 from keras import backend as K
 
-
+from keras.utils import  multi_gpu_model
 def _validate_backend():
     if K.backend() != 'mxnet' and K.backend() != 'tensorflow':
         raise NotImplementedError('This benchmark script only supports MXNet and TensorFlow backend')
 
 
-def run_benchmark(train_data, train_label, eval_data, eval_label, batch_size, epochs, start):
+def run_benchmark(train_data, train_label, eval_data, eval_label, batch_size, epochs, gpus):
 
     _validate_backend()
 
@@ -26,9 +26,10 @@ def run_benchmark(train_data, train_label, eval_data, eval_label, batch_size, ep
     model.summary()
 
     sgd = SGD(lr=0.1, momentum=0.9)
-
+    if gpus > 1:
+        model = multi_gpu_model(model, gpus=gpus)
     model.compile(loss='mse', optimizer=sgd, metrics=['accuracy'])
-
+    start = time.time()
     model.fit(train_data,
               train_label,
               epochs=epochs,

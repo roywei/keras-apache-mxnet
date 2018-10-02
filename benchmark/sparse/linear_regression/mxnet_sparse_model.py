@@ -8,14 +8,22 @@ import time
 import mxnet as mx
 
 
-def run_benchmark(train_data, train_label, eval_data, eval_label, batch_size, epochs, start):
+def run_benchmark(train_data, train_label, eval_data, eval_label, batch_size, epochs, gpus):
     train_iter = mx.io.NDArrayIter(train_data, train_label, batch_size, last_batch_handle='discard', label_name='label')
 
     eval_iter = mx.io.NDArrayIter(eval_data, eval_label, batch_size=batch_size,
                                   label_name='label', last_batch_handle='discard')
 
+    ctx = mx.cpu()
+    if gpus > 0:
+        ctx = []
+    for i in range(0, gpus):
+        ctx.append(mx.gpu(i))
+
     X = mx.sym.Variable('data', stype='csr')
-    weight = mx.symbol.Variable('weight', stype='row_sparse', shape=(train_data.shape[1], 1))
+    initializer = mx.initializer.Normal()
+
+    weight = mx.symbol.Variable('weight', stype='row_sparse', shape=(train_data.shape[1], 1), init=initializer)
     bias = mx.symbol.Variable("bias", shape=(1,))
     pred = mx.symbol.broadcast_add(mx.sym.sparse.dot(X, weight), bias)
 
@@ -26,18 +34,18 @@ def run_benchmark(train_data, train_label, eval_data, eval_label, batch_size, ep
     model = mx.mod.Module(
         symbol=lro,
         data_names=['data'],
-        label_names=['label']
+        label_names=['label'],
+        context=ctx
     )
 
     model.bind(data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
-    initializer = mx.initializer.Normal()
     model.init_params(initializer=initializer)
-    sgd = mx.optimizer.SGD(learning_rate=0.1, momentum=0.9)
+    sgd = mx.optimizer.SGD(learning_rate=0.1, rescale_grad=1.0/batch_size, momentum=0.9)
     model.init_optimizer(optimizer=sgd)
 
     # Use mean square error as the metric
     metric = mx.metric.create('MSE')
-
+    start = time.time()
     for epoch in range(epochs):
         train_iter.reset()
         metric.reset()
