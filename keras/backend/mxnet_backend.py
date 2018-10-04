@@ -2455,15 +2455,15 @@ def get_value(x):
     return eval(x)
 
 
-def get_arg_params(x):
+def get_mxnet_module_arg_params(x):
     """
     given parameter name,
-    get the updated value from bucketing module arg_params
+    get the updated value from mxnet module arg_params
     :param x: parameter values to  (e.g. kernels, bias)
     :return: updated parameter values
     """
     # retrieve from bind values first, which is up to date with
-    # arg_params in bucketing module
+    # arg_params in mxnet module
     if isinstance(x, KerasSymbol):
         if x.tensor is not None:
             if x.name in x.get_bind_values() and _MODEL is not None:
@@ -2483,7 +2483,7 @@ def batch_get_value(ops):
     # Returns
         A list of Numpy arrays.
     """
-    return [get_arg_params(op) for op in ops]
+    return [get_mxnet_module_arg_params(op) for op in ops]
 
 
 def set_value(x, value):

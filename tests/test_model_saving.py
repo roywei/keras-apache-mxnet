@@ -987,7 +987,7 @@ def test_functional_model_get_mxnet_model_info():
     assert data_shapes[0].shape == (1, 3)
 
 
-def get_kernel_and_bias(model):
+def _get_kernel_and_bias(model):
         """
         Given a model, return it's kernel and bias values for Conv2D and Dense layers
         :param model: input model
@@ -1039,12 +1039,13 @@ def test_fine_tune_save_weights():
 
     # compare kernel and bias from model1 and model2
     # they should have been updated after fine tune
-    kernel1, bias1 = get_kernel_and_bias(model1)
-    kernel2, bias2 = get_kernel_and_bias(model2)
+    kernel1, bias1 = _get_kernel_and_bias(model1)
+    kernel2, bias2 = _get_kernel_and_bias(model2)
     total_weight_diff = 0.0
     for i in range(0, len(kernel1)):
         total_weight_diff += np.sum(np.abs(kernel1[i] - kernel2[i]))
         total_weight_diff += np.sum(np.abs(bias1[i] - bias2[i]))
+    # weights should be different before and after fine tune
     assert total_weight_diff > 0.0
     os.remove('pre-trained.h5')
 
