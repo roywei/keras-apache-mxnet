@@ -1,4 +1,4 @@
-# Using Recurrent Neural Network (RNN) - Limitations and Workarounds
+# Using Recurrent Neural Network (RNN)
 
 ## Table of Contents
 
