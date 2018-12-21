@@ -2783,10 +2783,9 @@ def rnn(step_function, inputs, initial_states,
         # Concatenate the output across time dimension
         outputs = mx.sym.concat(*outputs, dim=1)
     else:
-        # TODO: remove version check after mxnet 1.3.1 release
         if mx.__version__ < '1.3.1':
             raise NotImplementedError('unroll=False in RNN only works with MXNet 1.3.1 or newer, '
-                                      'please upgrade to latest master using: pip install --upgrade mxnet --pre')
+                                      'please upgrade to latest master using: pip install --upgrade mxnet')
         # defining step functions for each RNN cells, implementation taken from call functions
         # from each RNN cell class in keras.layers.recurrent
 
@@ -3437,11 +3436,10 @@ def multi_hot_sparse_categorical_crossentropy(target, output, from_logits=False,
     >>>y_true_np2 = np.array([[1, 2], [0, 2],[0]])
     ```
     """
-    # TODO: remove version check after mxnet 1.3.1 stable release
     if mx.__version__ < '1.3.1':
         raise NotImplementedError('MXNet Backend: multi_hot_sparse_categorical_crossentropy only'
                                   'works with MXNet 1.3.1 or newer, please upgrade MXNet using:'
-                                  'pip install --upgrade mxnet --pre')
+                                  'pip install --upgrade mxnet')
     output_dimensions = list(range(ndim(output)))
     if axis != -1 and axis not in output_dimensions:
         raise ValueError(
