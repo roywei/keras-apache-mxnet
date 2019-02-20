@@ -5688,6 +5688,9 @@ def get_optimizers():
         def _get_lr(self, _):
             return self.lr.tensor.asscalar() / (1. + self.decay.tensor.asscalar() * self.num_update)
 
+        def _get_lrs(self, _):
+            return [self._get_lr(_) for i in range(0, self.aggregate_num)]
+
         def get_config(self):
             config = {}
             if hasattr(self, 'clipnorm'):
@@ -5714,6 +5717,8 @@ def get_optimizers():
                      nesterov=False, clipnorm=None, **kwargs):
             mx.optimizer.SGD.__init__(self, learning_rate=lr, momentum=momentum, clip_gradient=clipnorm, **kwargs)
             MXOptimizer.__init__(self, lr, decay)
+            # use only 1 aggregated optimizer to fit into Keras optimizer requirement
+            self.aggregate_num=1
 
         def get_config(self):
             config = {'lr': float(get_value(self.lr)),
