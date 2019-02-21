@@ -5718,7 +5718,7 @@ def get_optimizers():
             mx.optimizer.SGD.__init__(self, learning_rate=lr, momentum=momentum, clip_gradient=clipnorm, **kwargs)
             MXOptimizer.__init__(self, lr, decay)
             # use only 1 aggregated optimizer to fit into Keras optimizer requirement
-            self.aggregate_num=1
+            self.aggregate_num = 1
 
         def get_config(self):
             config = {'lr': float(get_value(self.lr)),
