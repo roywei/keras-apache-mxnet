@@ -19,6 +19,9 @@ phases:
       pip install --upgrade graphviz;
       pip install pydot;
       pip install nose;
+      pip install PyYAML==3.13;
+      pip install pytest==3.6.3;
+      pip install pytest-xdist==1.22.2;
       echo "Installing Keras from source";
       pip install -e .[visualize,tests];
 
