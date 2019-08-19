@@ -31,7 +31,7 @@ def softmax(x, axis=-1):
         e = K.exp(x - K.max(x, axis=axis, keepdims=True))
         s = K.sum(e, axis=axis, keepdims=True)
         return e / s
-    elif K.backend()=='mxnet' and ndim == 0:
+    elif K.backend() == 'mxnet' and ndim == 0:
         # x dim is not inferred yet
         return K.softmax(x)
     else:
