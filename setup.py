@@ -26,7 +26,7 @@ and is distributed under the MIT liense.
 '''
 
 setup(name='keras-mxnet',
-      version='2.2.4.1',
+      version='2.2.4.2',
       description='Deep Learning for humans. Keras with highly scalable,\
                    high performance Apache MXNet backend support.',
       long_description=long_description,
