@@ -11,7 +11,7 @@ phases:
       pip install --upgrade pip;
       pip install mxnet --pre;
       echo "Installing Tensorflow";
-      pip install tensorflow;
+      pip install tensorflow==1.15.0;
       echo "Installing Theano";
       pip install theano;
       pip install pillow;
