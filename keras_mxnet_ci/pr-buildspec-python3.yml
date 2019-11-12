@@ -2,6 +2,8 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      python: 3.7
     commands:
       echo $CODEBUILD_SOURCE_VERSION;
       PRID=$(echo $CODEBUILD_SOURCE_VERSION | sed "s/pr/pull/g");
