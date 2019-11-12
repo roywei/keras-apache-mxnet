@@ -16,7 +16,7 @@ phases:
       pip install theano;
       pip install pillow;
       sudo apt-get -y install graphviz;
-      pip install --upgrade graphviz;
+      pip install graphviz;
       pip install pydot;
       pip install nose;
       pip install PyYAML==3.13;
