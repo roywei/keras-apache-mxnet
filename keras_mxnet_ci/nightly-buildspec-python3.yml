@@ -16,7 +16,7 @@ phases:
       echo "Installing Tensorflow";
       python3.7 -m pip install tensorflow==1.15.0;
       echo "Installing Theano";
-      python3.7 -m pip install theano
+      python3.7 -m pip install theano;
       python3.7 -m pip install pillow;
       sudo apt-get -y install graphviz;
       python3.7 -m pip install graphviz;
