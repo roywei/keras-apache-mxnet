@@ -12,7 +12,7 @@ phases:
       git checkout pr_test;
       echo "Installing MXNet";
       apt-get update;
-      sudo apt-get install python3.7-dev;
+      apt-get install python3.7-dev;
       python3.7 -m pip install pip;
       python3.7 -m pip install mxnet --pre;
       echo "Installing Tensorflow";
@@ -20,7 +20,7 @@ phases:
       echo "Installing Theano";
       python3.7 -m pip install theano;
       python3.7 -m pip install pillow;
-      sudo apt-get -y install graphviz;
+      apt-get -y install graphviz;
       python3.7 -m pip install graphviz;
       python3.7 -m pip install pydot;
       python3.7 -m pip install nose;
