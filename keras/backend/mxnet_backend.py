@@ -5224,76 +5224,6 @@ def get_num_gpus():
         return len(gpus)
     return 0
 
-
-def _get_mxnet_context(context):
-    # If we are currently under a global scope context,
-    # then it overrides all other local context parameters.
-    global _CURRENT_SCOPE_CTX
-    # Note: _CURRENT_SCOPE_CTX will be None if not in scope.
-    if _CURRENT_SCOPE_CTX:
-        return _CURRENT_SCOPE_CTX
-
-    mxnet_context = []
-
-    if context is None:
-        # If user does not provide any context, if GPUs are detected, by default it runs on first available
-        # GPU device. If not GPUs are detected, then it falls back to CPU.
-        try:
-            gpus = mx.test_utils.list_gpus()
-        except CalledProcessError:
-            gpus = []
-        if gpus and len(gpus) > 0:
-            mxnet_context.append(mx.gpu(gpus[0]))
-        else:
-            mxnet_context.append(mx.current_context())
-    elif isinstance(context, Number):
-        # If user provides number of GPUs to use, set context accordingly.
-        if context == 0:
-            mxnet_context.append(mx.current_context())
-        else:
-            for gpu_id in range(0, context):
-                mxnet_context.append(mx.gpu(gpu_id))
-    elif isinstance(context, str):
-        # If user provides GPU context in the format - "gpu(0)" or "eia" or "eia(0)" i.e., string.
-        if context.lower().startswith('eia('):
-            index = int(context[4:-1])
-            mxnet_context.append(mx.eia(index))
-        elif context.lower().startswith('gpu('):
-            index = int(context[4:-1])
-            mxnet_context.append(mx.gpu(index))
-        elif context.lower() in mx.Context.devstr2type:
-            mxnet_context.append(mx.Context(context.lower()))
-        else:
-            raise ValueError("Invalid MXNet context provided - ", context)
-    else:
-        # If user has provided a list.
-        # List can be:
-        #   1. List of GPU IDs - [0, 1, 2, 3]
-        #   2. List of GPU context strings - ["gpu(0)", "gpu(1)"] or ["gpu0", "gpu1"]
-        #      Or, ["eia(0)", "eia(1)"]
-        for context_name in context:
-            if isinstance(context_name, Number):
-                mxnet_context.append(mx.gpu(context_name))
-            elif context_name.startswith('cpu'):
-                mxnet_context.append(mx.cpu())
-            elif context_name.startswith('gpu('):
-                index = int(context_name[4:-1])
-                mxnet_context.append(mx.gpu(index))
-            elif context_name.startswith('gpu'):
-                index = int(context_name[3:])
-                mxnet_context.append(mx.gpu(index))
-            elif context_name.startswith('eia('):
-                index = int(context_name[4:-1])
-                mxnet_context.append(mx.eia(index))
-            elif context_name.startswith('eia'):
-                index = int(context_name[3:])
-                mxnet_context.append(mx.eia(index))
-            else:
-                raise ValueError("Invalid MXNet context provided - ", context)
-
-    return mxnet_context
-
-
 class Context:
     """Scope for managing the context/runtime.
 
@@ -5311,7 +5241,7 @@ class Context:
 
     """
     def __init__(self, ctx):
-        self.scope_ctx = _get_mxnet_context(ctx)
+        self.scope_ctx = get_model().get_mxnet_context(ctx)
 
     def __enter__(self):
         global _CURRENT_SCOPE_CTX
@@ -5353,7 +5283,7 @@ def get_model():
             if 'kvstore' not in kwargs:
                 kwargs['kvstore'] = 'device'
 
-            self._context = _get_mxnet_context(kwargs['context'])
+            self._context = self.get_mxnet_context(kwargs['context'])
             self._kvstore = kwargs['kvstore']
 
             self._data_names = None
@@ -5693,6 +5623,75 @@ def get_model():
                     context=self._context,
                     fixed_param_names=self._fixed_weights)
 
+        @staticmethod
+        def get_mxnet_context(context):
+            # If we are currently under a global scope context,
+            # then it overrides all other local context parameters.
+            global _CURRENT_SCOPE_CTX
+            # Note: _CURRENT_SCOPE_CTX will be None if not in scope.
+            if _CURRENT_SCOPE_CTX:
+                return _CURRENT_SCOPE_CTX
+
+            mxnet_context = []
+
+            if context is None:
+                # If user does not provide any context, if GPUs are detected, by default it runs on first available
+                # GPU device. If not GPUs are detected, then it falls back to CPU.
+                try:
+                    gpus = mx.test_utils.list_gpus()
+                except CalledProcessError:
+                    gpus = []
+                if gpus and len(gpus) > 0:
+                    mxnet_context.append(mx.gpu(gpus[0]))
+                else:
+                    mxnet_context.append(mx.current_context())
+            elif isinstance(context, Number):
+                # If user provides number of GPUs to use, set context accordingly.
+                if context == 0:
+                    mxnet_context.append(mx.current_context())
+                else:
+                    for gpu_id in range(0, context):
+                        mxnet_context.append(mx.gpu(gpu_id))
+            elif isinstance(context, str):
+                # If user provides GPU context in the format - "gpu(0)" or "eia" or "eia(0)" i.e., string.
+                if context.lower().startswith('eia('):
+                    index = int(context[4:-1])
+                    mxnet_context.append(mx.eia(index))
+                elif context.lower().startswith('gpu('):
+                    index = int(context[4:-1])
+                    mxnet_context.append(mx.gpu(index))
+                elif context.lower() in mx.Context.devstr2type:
+                    mxnet_context.append(mx.Context(context.lower()))
+                else:
+                    raise ValueError("Invalid MXNet context provided - ", context)
+            else:
+                # If user has provided a list.
+                # List can be:
+                #   1. List of GPU IDs - [0, 1, 2, 3]
+                #   2. List of GPU context strings - ["gpu(0)", "gpu(1)"] or ["gpu0", "gpu1"]
+                #      Or, ["eia(0)", "eia(1)"]
+                for context_name in context:
+                    if isinstance(context_name, Number):
+                        mxnet_context.append(mx.gpu(context_name))
+                    elif context_name.startswith('cpu'):
+                        mxnet_context.append(mx.cpu())
+                    elif context_name.startswith('gpu('):
+                        index = int(context_name[4:-1])
+                        mxnet_context.append(mx.gpu(index))
+                    elif context_name.startswith('gpu'):
+                        index = int(context_name[3:])
+                        mxnet_context.append(mx.gpu(index))
+                    elif context_name.startswith('eia('):
+                        index = int(context_name[4:-1])
+                        mxnet_context.append(mx.eia(index))
+                    elif context_name.startswith('eia'):
+                        index = int(context_name[3:])
+                        mxnet_context.append(mx.eia(index))
+                    else:
+                        raise ValueError("Invalid MXNet context provided - ", context)
+
+            return mxnet_context
+
         def set_mxnet_context(self, context):
             """Sets the mxnet context for the current Model.
 
@@ -5714,7 +5713,7 @@ def get_model():
                                      'call `multi_gpu_model` with `gpus >= 2`. '
                                      'Received: `gpus=%d`' % context)
 
-            self._context = _get_mxnet_context(context)
+            self._context = self.get_mxnet_context(context)
 
     return Model
 
