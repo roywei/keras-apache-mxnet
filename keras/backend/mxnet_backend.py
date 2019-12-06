@@ -5224,6 +5224,7 @@ def get_num_gpus():
         return len(gpus)
     return 0
 
+
 class Context:
     """Scope for managing the context/runtime.
 

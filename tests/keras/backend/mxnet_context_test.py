@@ -21,6 +21,7 @@ except ImportError:
 pytestmark = pytest.mark.skipif(K.backend() != 'mxnet',
                                 reason='Testing MXNet context supports only for MXNet backend')
 
+
 class TestMXNetContext(object):
     batch_size = 128
     num_classes = 10
