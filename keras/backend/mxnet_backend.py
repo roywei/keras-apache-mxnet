@@ -5311,7 +5311,7 @@ class Context:
 
     """
     def __init__(self, ctx):
-        self.scope_ctx = get_model().get_mxnet_context(ctx)
+        self.scope_ctx = _get_mxnet_context(ctx)
 
     def __enter__(self):
         global _CURRENT_SCOPE_CTX
