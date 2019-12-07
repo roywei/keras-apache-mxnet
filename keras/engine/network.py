@@ -290,7 +290,7 @@ class Network(Layer):
         for layer in self._output_layers:
             self.output_names.append(layer.name)
 
-    def _init_subclassed_network(self, name=None):
+    def _init_subclassed_network(self, name=None, **kwargs):
         self._base_init(name=name)
         self._is_graph_network = False
         self._expects_training_arg = has_arg(self.call, 'training')

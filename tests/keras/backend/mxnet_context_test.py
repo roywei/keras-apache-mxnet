@@ -62,6 +62,10 @@ class TestMXNetContext(object):
         model.fit(self.x_train, self.y_train,
                   batch_size=self.batch_size,
                   epochs=self.epochs)
+        if len(self.gpus) > 0:
+            assert model._context == [mx.gpu(self.gpus[-1])]
+        else:
+            assert model._context == [mx.cpu()]
 
     def test_context_compile(self):
         model = self._get_model()
@@ -73,6 +77,10 @@ class TestMXNetContext(object):
         model.fit(self.x_train, self.y_train,
                   batch_size=self.batch_size,
                   epochs=self.epochs)
+        if len(self.gpus) > 0:
+            assert model._context == [mx.gpu(self.gpus[-1])]
+        else:
+            assert model._context == [mx.cpu()]
 
     def test_set_mxnet_context(self):
         model = self._get_model()
@@ -84,6 +92,10 @@ class TestMXNetContext(object):
         model.fit(self.x_train, self.y_train,
                   batch_size=self.batch_size,
                   epochs=self.epochs)
+        if len(self.gpus) > 0:
+            assert model._context == [mx.gpu(self.gpus[-1])]
+        else:
+            assert model._context == [mx.cpu()]
 
 if __name__ == '__main__':
     pytest.main([__file__])
