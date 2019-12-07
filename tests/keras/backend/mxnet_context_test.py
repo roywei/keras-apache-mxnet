@@ -1,22 +1,12 @@
-import warnings
-
+import mxnet as mx
 import pytest
+
 import keras
 from keras import backend as K
 from keras.datasets import mnist
-from keras.models import Sequential
 from keras.layers import Dense, Dropout
+from keras.models import Sequential
 from keras.optimizers import RMSprop
-import mxnet as mx
-
-BACKEND = None
-
-try:
-    from keras.backend import mxnet_backend as KMX
-    BACKEND = KMX
-except ImportError:
-    KMX = None
-    warnings.warn('Could not import the MXNet backend')
 
 pytestmark = pytest.mark.skipif(K.backend() != 'mxnet',
                                 reason='Testing MXNet context supports only for MXNet backend')
@@ -25,7 +15,7 @@ pytestmark = pytest.mark.skipif(K.backend() != 'mxnet',
 class TestMXNetContext(object):
     batch_size = 128
     num_classes = 10
-    epochs = 1
+    epochs = 2
 
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
