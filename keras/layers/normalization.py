@@ -161,7 +161,7 @@ class BatchNormalization(Layer):
         if K.backend() == 'mxnet':
             return K.mxnet_batchnorm(inputs, self.gamma, self.beta, self.moving_mean, self.moving_variance,
                                      self.momentum, axis=self.axis, epsilon=self.epsilon,
-                                     use_global_stats=self.trainable)
+                                     use_global_stats=not self.trainable)
 
         input_shape = K.int_shape(inputs)
         # Prepare broadcasting shape.
