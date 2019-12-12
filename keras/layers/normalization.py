@@ -160,7 +160,7 @@ class BatchNormalization(Layer):
         # This is functional for now, however, needs to be revisited to do it in native Keras way.
         if K.backend() == 'mxnet':
             return K.mxnet_batchnorm(inputs, self.gamma, self.beta, self.moving_mean, self.moving_variance,
-                                     self.momentum, axis=self.axis, epsilon=self.epsilon)
+                                     self.momentum, axis=self.axis, epsilon=self.epsilon, use_global_stats=self.trainable)
 
         input_shape = K.int_shape(inputs)
         # Prepare broadcasting shape.
