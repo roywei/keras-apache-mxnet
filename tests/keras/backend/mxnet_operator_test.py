@@ -28,13 +28,14 @@ class TestMXNetOperator(object):
         model = Model(inputs=[x], outputs=[y])
         model.compile(loss='binary_crossentropy', optimizer='sgd')
         model.fit(data, label, batch_size=5, epochs=10, verbose=1)
-        path = '/tmp/test_model.hdf5'
-        model.save(path)
-        loaded = load_model(path)
         free_layers = {'y'}
-        for layer in loaded.layers:
+        for layer in model.layers:
             if layer.name not in free_layers:
                 layer.trainable = False
+        path = '/tmp/test_model.hdf5'
+        model.save(path)
+
+        loaded = load_model(path)
         loaded.compile(loss='binary_crossentropy', optimizer='sgd')
 
         loaded.fit(data, label, batch_size=5, epochs=10, verbose=1)
