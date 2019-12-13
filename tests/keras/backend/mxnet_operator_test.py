@@ -1,10 +1,10 @@
 import pytest
 
 import numpy as np
+import tempfile
 from keras import backend as K
 from keras import Model
 from keras.layers import Input, Dense, Activation, BatchNormalization
-from keras.models import load_model
 
 pytestmark = pytest.mark.skipif(K.backend() != 'mxnet',
                                 reason='Testing MXNet context supports only for MXNet backend')
@@ -28,14 +28,18 @@ class TestMXNetOperator(object):
         model = Model(inputs=[x], outputs=[y])
         model.compile(loss='binary_crossentropy', optimizer='sgd')
         model.fit(data, label, batch_size=5, epochs=10, verbose=1)
-        free_layers = {'y'}
-        for layer in model.layers:
-            if layer.name not in free_layers:
-                layer.trainable = False
-        path = '/tmp/test_model.hdf5'
-        model.save(path)
+        _, fname = tempfile.mkstemp('.h5')
+        model.save_weights(fname)
 
-        loaded = load_model(path)
+        # reconstruct model with trainable=False except last layer
+        x = Input(shape=(3,), name='x')
+        f = Dense(10, name='h1', trainable=False)(x)
+        f = BatchNormalization(name='bn1', trainable=False)(f)
+        f = Activation('relu', name='r1', trainable=False)(f)
+        y = Dense(1, name='y')(f)
+
+        loaded = Model(inputs=[x], outputs=[y])
+        loaded.load_weights(fname)
         loaded.compile(loss='binary_crossentropy', optimizer='sgd')
 
         loaded.fit(data, label, batch_size=5, epochs=10, verbose=1)
