@@ -158,6 +158,8 @@ class BatchNormalization(Layer):
         # MXNet Backend calculates moving mean and moving variance in batch_norm operation directly.
         # Hence, calling native mxnet batchnorm.
         # This is functional for now, however, needs to be revisited to do it in native Keras way.
+        # to freeze BatchNorm layer, pass `trainable=False` during layer construction
+        # for more info refer to issue: https://github.com/awslabs/keras-apache-mxnet/issues/23
         if K.backend() == 'mxnet':
             return K.mxnet_batchnorm(inputs, self.gamma, self.beta, self.moving_mean, self.moving_variance,
                                      self.momentum, axis=self.axis, epsilon=self.epsilon,
