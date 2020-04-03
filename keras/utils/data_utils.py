@@ -181,7 +181,7 @@ def get_file(fname,
         datadir_base = os.path.join('/tmp', '.keras')
     datadir = os.path.join(datadir_base, cache_subdir)
     if not os.path.exists(datadir):
-        os.makedirs(datadir)
+        os.makedirs(datadir, exist_ok=True)
 
     if untar:
         untar_fpath = os.path.join(datadir, fname)
