@@ -32,7 +32,7 @@ except ImportError:
 # disable theano test as failed to import in python3
 # tracked in: https://github.com/Theano/Theano/issues/6737
 try:
-    if sys.version_info > 3:
+    if sys.version_info[0] > 3:
         KTH = None
     else:
         from keras.backend import theano_backend as KTH
@@ -1446,6 +1446,7 @@ class TestBackend(object):
                                       interpolation='bilinear')
 
     @pytest.mark.skipif(K.backend() == 'cntk', reason='Not supported.')
+    @pytest.mark.skipif(not KTH, reason="Theano failed to import")
     @pytest.mark.parametrize('data_format', ['channels_first', 'channels_last'])
     def test_resize_images_bilinear(self, data_format):
         self._helper_bilinear(data_format, 2, 2)
@@ -1557,7 +1558,7 @@ class TestBackend(object):
 
     @pytest.mark.skipif(K.backend() == 'mxnet',
                         reason="MXNet backend use MXNet native batchnorm. To be fixed.")
-    @pytest.mark.skipif(not KTH)
+    @pytest.mark.skipif(not KTH, reason="Theano failed to import")
     def test_batchnorm(self):
         shape = (2, 3)
         for data_format in ['channels_first', 'channels_last']:
