@@ -16,18 +16,20 @@ class TestMXNetContext(object):
     batch_size = 128
     num_classes = 10
     epochs = 2
-
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-    x_train = x_train.reshape(60000, 784)[:500]
-    x_train = x_train.astype('float32')
-    x_train /= 255
-    y_train = keras.utils.to_categorical(y_train[:500], num_classes)
     gpus = mx.test_utils.list_gpus()
     if len(gpus) > 0:
         context = 'gpu(%d)' % gpus[-1]
     else:
         context = 'cpu'
+
+    def _get_data(self):
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+        x_train = x_train.reshape(60000, 784)[:500]
+        x_train = x_train.astype('float32')
+        x_train /= 255
+        y_train = keras.utils.to_categorical(y_train[:500], self.num_classes)
+        return x_train, y_train
 
     def _get_model(self):
         model = Sequential()
@@ -48,8 +50,8 @@ class TestMXNetContext(object):
         model.compile(loss='categorical_crossentropy',
                       optimizer=RMSprop(),
                       metrics=['accuracy'])
-
-        model.fit(self.x_train, self.y_train,
+        x_train, y_train = self._get_data()
+        model.fit(x_train, y_train,
                   batch_size=self.batch_size,
                   epochs=self.epochs)
         if len(self.gpus) > 0:
@@ -63,8 +65,8 @@ class TestMXNetContext(object):
                       optimizer=RMSprop(),
                       metrics=['accuracy'],
                       context=self.context)
-
-        model.fit(self.x_train, self.y_train,
+        x_train, y_train = self._get_data()
+        model.fit(x_train, y_train,
                   batch_size=self.batch_size,
                   epochs=self.epochs)
         if len(self.gpus) > 0:
@@ -79,7 +81,8 @@ class TestMXNetContext(object):
                       optimizer=RMSprop(),
                       metrics=['accuracy'])
 
-        model.fit(self.x_train, self.y_train,
+        x_train, y_train = self._get_data()
+        model.fit(x_train, y_train,
                   batch_size=self.batch_size,
                   epochs=self.epochs)
         if len(self.gpus) > 0:
