@@ -1,3 +1,4 @@
+import sys
 import pytest
 from numpy.testing import assert_allclose
 import numpy as np
@@ -11,6 +12,7 @@ import reference_operations as KNP
 
 
 BACKENDS = []  # Holds a list of all available back-ends
+BACKENDS_TH_TF = []
 
 try:
     from keras.backend import cntk_backend as KC
@@ -22,15 +24,20 @@ except ImportError:
 try:
     from keras.backend import tensorflow_backend as KTF
     BACKENDS.append(KTF)
+    BACKENDS_TH_TF.append(KTF)
 except ImportError:
     KTF = None
     warnings.warn('Could not import the TensorFlow backend.')
 
-# disable theano test as failed to import
+# disable theano test as failed to import in python3
 # tracked in: https://github.com/Theano/Theano/issues/6737
 try:
-    from keras.backend import theano_backend as KTH
-    BACKENDS.append(KTH)
+    if sys.version_info > 3:
+        KTH = None
+    else:
+        from keras.backend import theano_backend as KTH
+        BACKENDS.append(KTH)
+        BACKENDS_TH_TF.append(KTH)
 except ImportError:
     KTH = None
     warnings.warn('Could not import the Theano backend')
@@ -44,6 +51,7 @@ except ImportError:
 
 BACKENDS = set(BACKENDS)
 BACKENDS_WITHOUT_MXNET = BACKENDS - set([KMX])
+BACKENDS_TH_TF = set(BACKENDS_TH_TF)
 
 
 WITH_NP = [KTH if K.backend() == 'theano' else KC if K.backend() == 'cntk' else KTF, KNP, KMX]
@@ -458,10 +466,10 @@ class TestBackend(object):
                         reason='cntk doesn\'t support gradient in this way.')
     def test_gradient(self):
         val = np.random.random((4, 2))
-        x_list = [k.variable(val) for k in [KTH, KTF]]
+        x_list = [k.variable(val) for k in BACKENDS_TH_TF]
         z_list = []
         zero_list = []
-        for x, k in zip(x_list, [KTH, KTF]):
+        for x, k in zip(x_list, BACKENDS_TH_TF):
             exp = x * k.exp(x)
             loss = k.sum(exp)
             zero_loss = k.stop_gradient(loss)
@@ -489,7 +497,7 @@ class TestBackend(object):
                         reason='cntk currently not support function in this '
                                'way, so can\'t test as this.')
     def test_function(self):
-        test_backend = [KTH, KTF]
+        test_backend = BACKENDS_TH_TF
         val = np.random.random((4, 2))
         input_val = np.random.random((4, 2))
 
@@ -1050,7 +1058,7 @@ class TestBackend(object):
         for k in range(num_classes + 1):
             z_list = [b.eval(b.in_top_k(b.variable(predictions, dtype='float32'),
                                         b.variable(targets, dtype='int32'), k))
-                      for b in [KTH, KTF]]
+                      for b in BACKENDS_TH_TF]
             assert_list_pairwise(z_list)
 
         # Identical prediction test case:
@@ -1064,7 +1072,7 @@ class TestBackend(object):
         for k in range(1, num_classes + 1):
             z_list = [b.eval(b.in_top_k(b.variable(predictions, dtype='float32'),
                                         b.variable(targets, dtype='int32'), k))
-                      for b in [KTH, KTF]]
+                      for b in BACKENDS_TH_TF]
             assert_list_pairwise(z_list)
 
     @pytest.mark.parametrize('op,input_shape,kernel_shape,padding,data_format', [
@@ -1283,7 +1291,7 @@ class TestBackend(object):
                                       BACKENDS, cntk_dynamicity=True,
                                       pool_size=(2, 3, 2), strides=(1, 1, 1), padding='valid')
 
-        check_single_tensor_operation('pool3d', (2, 6, 6, 6, 3), [KTH, KTF], pool_size=(3, 3, 3),
+        check_single_tensor_operation('pool3d', (2, 6, 6, 6, 3), BACKENDS_TH_TF, pool_size=(3, 3, 3),
                                       strides=(1, 1, 1), padding='same', pool_mode='avg')
 
         # MXNet pooling in 'valid' mode, do not match output from other backend due to assymetric padding and slicing.
@@ -1431,7 +1439,7 @@ class TestBackend(object):
     def _helper_bilinear(data_format, height_factor, width_factor):
         x_shape = (2, 3, 4, 5)
         check_single_tensor_operation('resize_images', x_shape,
-                                      [KTF, KTH],
+                                      BACKENDS_TH_TF,
                                       height_factor=height_factor,
                                       width_factor=width_factor,
                                       data_format=data_format,
@@ -1485,7 +1493,7 @@ class TestBackend(object):
             check_single_tensor_operation('spatial_2d_padding', x_shape, BACKENDS_WITHOUT_MXNET,
                                           padding=padding, data_format=data_format)
             # Check handling of dynamic shapes.
-            for k in [KTF, KTH]:
+            for k in BACKENDS_TH_TF:
                 x = k.placeholder(shape=(1, None, None, 1))
                 y = k.spatial_2d_padding(x, padding=padding, data_format='channels_last')
                 assert k.int_shape(y) == (1, None, None, 1)
@@ -1510,7 +1518,7 @@ class TestBackend(object):
             check_single_tensor_operation('spatial_3d_padding', x_shape, BACKENDS_WITHOUT_MXNET,
                                           padding=padding, data_format=data_format)
             # Check handling of dynamic shapes.
-            for k in [KTF, KTH]:
+            for k in BACKENDS_TH_TF:
                 x = k.placeholder(shape=(1, None, None, None, 1))
                 y = k.spatial_3d_padding(x, padding=padding, data_format='channels_last')
                 assert k.int_shape(y) == (1, None, None, None, 1)
@@ -1549,6 +1557,7 @@ class TestBackend(object):
 
     @pytest.mark.skipif(K.backend() == 'mxnet',
                         reason="MXNet backend use MXNet native batchnorm. To be fixed.")
+    @pytest.mark.skipif(not KTH)
     def test_batchnorm(self):
         shape = (2, 3)
         for data_format in ['channels_first', 'channels_last']:
@@ -1771,7 +1780,7 @@ class TestBackend(object):
         W = np.random.random((5, 4))
         # cntk, mxnet does not support it yet.
         backends = [KTF]
-        if KTH.th_sparse_module:
+        if KTH and KTH.th_sparse_module:
             # Theano has some dependency issues for sparse
             backends.append(KTH)
 
@@ -1801,7 +1810,7 @@ class TestBackend(object):
 
         # cntk, mxnet not support it yet
         backends = [KTF]
-        if KTH.th_sparse_module:
+        if KTH and KTH.th_sparse_module:
             # Theano has some dependency issues for sparse
             backends.append(KTH)
 
