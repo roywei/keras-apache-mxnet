@@ -11,6 +11,7 @@ phases:
       echo "Installing MXNet";
       apt-get update;
       apt-get install python3.7-dev;
+      apt-get install binutils;
       python3.7 -m pip install pip;
       python3.7 -m pip install mxnet --pre;
       echo "Installing Tensorflow";
