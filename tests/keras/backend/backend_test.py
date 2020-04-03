@@ -32,7 +32,7 @@ except ImportError:
 # disable theano test as failed to import in python3
 # tracked in: https://github.com/Theano/Theano/issues/6737
 try:
-    if sys.version_info[0] > 3:
+    if sys.version_info[0] >= 3:
         KTH = None
     else:
         from keras.backend import theano_backend as KTH
