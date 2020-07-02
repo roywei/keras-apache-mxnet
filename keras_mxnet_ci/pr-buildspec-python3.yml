@@ -14,7 +14,7 @@ phases:
       apt-get update;
       apt-get install python3.7-dev;
       python3.7 -m pip install pip;
-      python3.7 -m pip install mxnet --pre;
+      python3.7 -m pip install mxnet==1.6.0;
       echo "Installing Tensorflow";
       python3.7 -m pip install tensorflow==1.15.0;
       echo "Installing Theano";

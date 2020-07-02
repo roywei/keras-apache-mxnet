@@ -9,7 +9,7 @@ phases:
       echo "Installing MXNet";
       apt-get update;
       pip install --upgrade pip;
-      pip install mxnet --pre;
+      pip install mxnet==1.6.0;
       echo "Installing Tensorflow";
       pip install tensorflow==1.15.0;
       echo "Installing Theano";
