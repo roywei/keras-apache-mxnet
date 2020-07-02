@@ -223,7 +223,7 @@ def test_selu():
     result = f([negative_values])[0]
     true_result = (np.exp(negative_values) - 1) * scale * alpha
 
-    assert_allclose(result, true_result)
+    assert_allclose(result, true_result, rtol=1e-05, atol=1e-05)
 
 
 def test_tanh():
