@@ -211,6 +211,7 @@ def test_generator_enqueuer_threadsafe():
     enqueuer.stop()
 
 
+@pytest.mark.skip(reason='Flaky in CI dock environment')
 def test_generator_enqueuer_fail_threads():
     enqueuer = GeneratorEnqueuer(create_generator_from_sequence_threads(
         FaultSequence()), use_multiprocessing=False)
