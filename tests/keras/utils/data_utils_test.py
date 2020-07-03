@@ -187,6 +187,7 @@ def test_generator_enqueuer_threads():
     enqueuer.stop()
 
 
+@pytest.mark.skip(reason='Flaky in CI dock environment')
 def test_generator_enqueuer_processes():
     enqueuer = GeneratorEnqueuer(create_generator_from_sequence_pcs(
         DummySequence([3, 200, 200, 3])), use_multiprocessing=True)
@@ -220,7 +221,7 @@ def test_generator_enqueuer_fail_threads():
     with pytest.raises(IndexError):
         next(gen_output)
 
-
+@pytest.mark.skip(reason='Flaky in CI dock environment')
 def test_generator_enqueuer_fail_processes():
     enqueuer = GeneratorEnqueuer(create_generator_from_sequence_pcs(
         FaultSequence()), use_multiprocessing=True)
@@ -258,6 +259,7 @@ def test_ordered_enqueuer_threads_not_ordered():
 
 
 @use_spawn
+@pytest.mark.skip(reason='Flaky in CI dock environment')
 def test_ordered_enqueuer_processes():
     enqueuer = OrderedEnqueuer(DummySequence([3, 200, 200, 3]),
                                use_multiprocessing=True)
